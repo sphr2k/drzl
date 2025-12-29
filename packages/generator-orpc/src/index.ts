@@ -236,6 +236,11 @@ export class ORPCGenerator {
     const path = await import('node:path');
     const out = path.resolve(process.cwd(), opts.outputDir);
     await fs.mkdir(out, { recursive: true });
+    const servicesDir = opts.servicesDir
+      ? path.isAbsolute(opts.servicesDir)
+        ? opts.servicesDir
+        : path.resolve(process.cwd(), opts.servicesDir)
+      : undefined;
 
     // Template selection (built-ins only for now)
     let template: ORPCTemplateHooks = defaultTemplate();
@@ -292,7 +297,7 @@ export class ORPCGenerator {
         opts.templateOptions,
         opts.validation,
         opts.databaseInjection,
-        opts.servicesDir
+        servicesDir
       );
       const formatted = await this.formatCode(
         buildHeader(opts.outputHeader) + content,

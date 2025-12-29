@@ -70,7 +70,12 @@ const template: ORPCTemplateHooks = {
         .map((p, i) => (i === 0 ? p.toLowerCase() : p[0].toUpperCase() + p.slice(1).toLowerCase()))
         .join('');
     };
-    return `${ctx.outDir}/${toCase(base)}.ts`;
+    const outDirResolved = ctx.outDir
+      ? path.isAbsolute(ctx.outDir)
+        ? ctx.outDir
+        : path.resolve(process.cwd(), ctx.outDir)
+      : path.resolve(process.cwd(), 'src/api');
+    return `${outDirResolved}/${toCase(base)}.ts`;
   },
   routerName: (table, ctx) => {
     const suffix = ctx.naming?.routerSuffix ?? '';
@@ -95,7 +100,18 @@ const template: ORPCTemplateHooks = {
     const Service = `${cap(singular)}Service`;
     const outDir = ctx?.outDir ?? 'src/api';
     const servicesDir = (ctx as any)?.servicesDir ?? servicesDirDefault;
-    const rel = path.relative(outDir, servicesDir) || '.';
+    const outDirResolved = outDir
+      ? path.isAbsolute(outDir)
+        ? outDir
+        : path.resolve(process.cwd(), outDir)
+      : path.resolve(process.cwd(), 'src/api');
+    const servicesDirResolved = servicesDir
+      ? path.isAbsolute(servicesDir)
+        ? servicesDir
+        : path.resolve(process.cwd(), servicesDir)
+      : path.resolve(process.cwd(), servicesDirDefault);
+    const rel = path.relative(outDirResolved, servicesDirResolved) || '.';
+    const relNormalized = rel.replace(/\\/g, '/');
 
     const isInjectionMode = ctx?.databaseInjection?.enabled === true;
     const dbType = ctx?.databaseInjection?.databaseType ?? 'any';
@@ -106,7 +122,7 @@ const template: ORPCTemplateHooks = {
         : '';
       return `import { os, ORPCError } from '@orpc/server'
 import { z } from 'zod'
-import { ${Service} } from '${rel}/${singular}Service'
+import { ${Service} } from '${relNormalized}/${singular}Service'
 ${typeImport}
 
 export const dbMiddleware = os
@@ -123,7 +139,7 @@ export const dbMiddleware = os
     });
   });`;
     } else {
-      return `import { os } from '@orpc/server'\nimport { z } from 'zod'\nimport { ${Service} } from '${rel}/${singular}Service'`;
+      return `import { os } from '@orpc/server'\nimport { z } from 'zod'\nimport { ${Service} } from '${relNormalized}/${singular}Service'`;
     }
   },
   header: (table) => `// Router for table: ${table.name}`,

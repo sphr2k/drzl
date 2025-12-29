@@ -47,6 +47,7 @@ export const GeneratorSchema = z.object({
     .optional(),
   // template options
   templateOptions: z.record(z.string(), z.any()).optional(),
+  servicesDir: z.string().optional(),
 });
 
 export const AnalyzerSchema = z.object({
